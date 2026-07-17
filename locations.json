@@ -1,0 +1,78 @@
+{
+  "config": {
+    "homebase": { "name": "Deep Ellum (map center)", "lat": 32.7840, "lng": -96.7900 },
+    "radiusMiles": 3
+  },
+  "categories": {
+    "ticketed": { "label": "Ticketed Events", "color": "#8B7BAB", "icon": "ticket" },
+    "walkin":   { "label": "Free / Walk-in",  "color": "#7BA67B", "icon": "martini" }
+  },
+  "locations": [
+    { "name": "Shyboy Hi Fi — Shawn Dub + Kels", "cat": "walkin", "lat": 32.7805249, "lng": -96.8003489, "star": false, "city": "dallas",
+      "price": "Free w/ RSVP",
+      "link": "https://dice.fm/event/l8knml-shawn-dub-kels-17th-jul-shyboy-hi-fi-dallas-tickets",
+      "linkLabel": "RSVP on DICE",
+      "note": "Vinyl-only listening bar downtown. Free with RSVP, walk-ups welcome if patient. Doors 6 PM, open til 2 AM. Get there before 9 to beat the line.",
+      "tags": ["shyboy", "hifi", "vinyl", "listening bar", "downtown", "shawn dub", "kels", "free", "dice"],
+      "address": "1313 Main St, Dallas" },
+
+    { "name": "Ladylove Lounge & Sound", "cat": "walkin", "lat": 32.7485802, "lng": -96.8273378, "star": false, "city": "dallas",
+      "price": "$0 · no cover",
+      "link": "https://www.instagram.com/ladylovedallas/p/DawSuPskdUo/",
+      "linkLabel": "Event Post (IG)",
+      "note": "Record lounge in Bishop Arts. Nightly curated DJ sets, strict no-requests. Kitchen open to close — banh mi is the move. Happy hour 5–8 PM, 21+. Best as the early stop.",
+      "tags": ["ladylove", "lady love", "bishop arts", "oak cliff", "lounge", "records", "free", "food", "happy hour"],
+      "address": "310 W Seventh St, Dallas" },
+
+    { "name": "Double D's", "cat": "walkin", "lat": 32.790283, "lng": -96.8200549, "star": false, "city": "dallas",
+      "price": "No cover",
+      "link": "https://www.instagram.com/doubledsdallas/",
+      "linkLabel": "Instagram",
+      "note": "Design District cocktail bar with DJs, dancing, pool, and N64. No ticket, no kitchen — eat first. 5 PM–2 AM. Line forms later in the night.",
+      "tags": ["double ds", "design district", "cocktails", "dj", "dancing", "free", "bar"],
+      "address": "1404 N Riverfront Blvd, Dallas" },
+
+    { "name": "It'll Do Club — Jody Wisternoff", "cat": "ticketed", "lat": 32.7910936, "lng": -96.7689499, "star": false, "city": "dallas",
+      "price": "$20",
+      "link": "https://www.eventbrite.com/e/jody-wisternoff-at-itll-do-club-tickets-1987708906848?aff=oddtdtcreator",
+      "linkLabel": "Tickets on Eventbrite",
+      "note": "Anjunadeep royalty on Deep Ellum's famous light-up floor. 9 PM–2 AM, 21+, no refunds. Surround sound system, house heads' home turf.",
+      "tags": ["itll do", "it'll do", "deep ellum", "jody wisternoff", "anjunadeep", "house", "techno", "eventbrite"],
+      "address": "4322 Elm St, Dallas" },
+
+    { "name": "CTRL Room — BL3SS", "cat": "ticketed", "lat": 32.7861129, "lng": -96.7896958, "star": false, "city": "dallas",
+      "price": "$20",
+      "link": "https://speakeasygo.com/CTRL-Room-Dallas/BL3SS-at-CTRL-Room-7.17.26?eid=EVE-Y0Z8DK",
+      "linkLabel": "Tickets on Speakeasy",
+      "note": "BL3SS headlines with Rick Slick b2b Louie Louie in support. 10 PM–2 AM, 21+. Same building as Tree Haus — two parties, one address.",
+      "tags": ["ctrl room", "ctrl", "swiss ave", "bl3ss", "house", "speakeasy", "deep ellum"],
+      "address": "2511 Swiss Ave, Dallas" },
+
+    { "name": "Tree Haus — K-Pop Night: Enhypen After Party", "cat": "ticketed", "lat": 32.7860000, "lng": -96.7895500, "star": false, "city": "dallas",
+      "price": "$15",
+      "link": "https://speakeasygo.com/CTRL-Room-Dallas/K-Pop-Night-at-Tree-Haus-7.17.26?eid=EVE-006UPU",
+      "linkLabel": "Tickets on Speakeasy",
+      "note": "DJs Paul & Daewu spin the Enhypen after party. 10 PM–2 AM, 21+, ID required. Shares the building with CTRL Room — easy to bounce between both.",
+      "tags": ["tree haus", "treehaus", "kpop", "k-pop", "enhypen", "after party", "swiss ave", "speakeasy"],
+      "address": "2511 Swiss Ave, Dallas" },
+
+    { "name": "Tulips FTW — Work It! 90s/00s R&B & Hip Hop", "cat": "ticketed", "lat": 32.7431484, "lng": -97.3289713, "star": false, "city": "fort worth",
+      "price": "$20",
+      "link": "https://wl.eventim.us/event/work-it-90s2000s-randb-and-hip-hop-night/696342?afflky=TulipsFTW",
+      "linkLabel": "Tickets on Eventim",
+      "note": "Missy, Nelly, TLC, Biggie throwbacks in Near Southside Fort Worth. Doors 9:30 PM, 18+ to enter / 21+ to drink. ~35–40 min drive from the Dallas cluster — plan it as its own night or the main event.",
+      "tags": ["tulips", "tulips ftw", "fort worth", "near southside", "work it", "90s", "2000s", "rnb", "hip hop", "throwback", "eventim"],
+      "address": "112 St Louis Ave, Fort Worth" },
+
+    { "name": "Downtown Core", "cat": "zones", "lat": 32.7805, "lng": -96.8005, "radius": 0.5,
+      "note": "Shyboy Hi Fi's turf. Main St bars and easy rideshare pickups.", "address": "Downtown Dallas" },
+    { "name": "Deep Ellum", "cat": "zones", "lat": 32.7845, "lng": -96.7780, "radius": 0.8,
+      "note": "The nightlife spine — It'll Do on the east end, CTRL Room / Tree Haus on the northwest edge. Everything walkable-ish, rideshare between ends.", "address": "Deep Ellum, Dallas" },
+    { "name": "Design District", "cat": "zones", "lat": 32.7900, "lng": -96.8200, "radius": 0.5,
+      "note": "Double D's home turf, across the river from downtown.", "address": "Design District, Dallas" },
+    { "name": "Bishop Arts", "cat": "zones", "lat": 32.7480, "lng": -96.8280, "radius": 0.4,
+      "note": "Ladylove's neighborhood. Great dinner-first stop, parking is rough — valet or rideshare.", "address": "Bishop Arts District, Dallas" },
+    { "name": "Near Southside (FTW)", "cat": "zones", "lat": 32.7435, "lng": -97.3290, "radius": 0.7,
+      "note": "Tulips FTW's district in Fort Worth — the one out-of-town cluster, ~35–40 min from Dallas.", "address": "Near Southside, Fort Worth" }
+  ]
+}

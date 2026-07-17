@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>DFW Night Out — July 2026</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/lucide-static@0.460.0/font/lucide.css" rel="stylesheet">
+<style>
+  :root {
+    /* Light — "Lost in the Desert" */
+    --l-bg: #e9d4b8;
+    --l-panel: #f4e4cf;
+    --l-panel-2: #ecd9bf;
+    --l-ink: #3d2b1f;
+    --l-ink-soft: #6b5444;
+    --l-line: #c9a986;
+    --l-accent: #b5582f;
+
+    /* Night — Fallout / dark blue + amber */
+    --n-bg: #0d1b2a;
+    --n-panel: #14283d;
+    --n-panel-2: #1a3047;
+    --n-ink: #f0d9b0;
+    --n-ink-soft: #b89b73;
+    --n-line: #2a4a63;
+    --n-accent: #d98a3d;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overflow:hidden; font-family:'Inter',system-ui,sans-serif; }
+  #map { position:absolute; inset:0; }
+
+  body {
+    --bg:var(--l-bg); --panel:var(--l-panel); --panel-2:var(--l-panel-2);
+    --ink:var(--l-ink); --ink-soft:var(--l-ink-soft); --line:var(--l-line); --accent:var(--l-accent);
+    background:var(--bg); color:var(--ink);
+    transition:background .4s ease, color .4s ease;
+  }
+  body.night {
+    --bg:var(--n-bg); --panel:var(--n-panel); --panel-2:var(--n-panel-2);
+    --ink:var(--n-ink); --ink-soft:var(--n-ink-soft); --line:var(--n-line); --accent:var(--n-accent);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position:absolute; top:0; left:0; right:0; z-index:5;
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px;
+    background:linear-gradient(to bottom, rgba(0,0,0,.18), transparent);
+    pointer-events:none;
+  }
+  .topbar > * { pointer-events:auto; }
+  .menu-btn, .toggle-btn, .locate-btn {
+    width:44px; height:44px; border:none; border-radius:12px;
+    background:var(--panel); color:var(--ink);
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; cursor:pointer; flex-shrink:0;
+    transition:background .2s, transform .1s;
+  }
+  .menu-btn:active, .toggle-btn:active, .locate-btn:active { transform:scale(.94); }
+  .toggle-btn.on, .locate-btn.on { background:var(--accent); color:#fff; }
+
+  .user-dot { position:relative; width:18px; height:18px; }
+  .user-pip {
+    position:relative; z-index:2; width:18px; height:18px; border-radius:50%;
+    background:#2f7fdb; border:3px solid #fff;
+    box-shadow:0 0 0 4px rgba(47,127,219,.3), 0 2px 6px rgba(0,0,0,.4);
+  }
+  .user-cone {
+    position:absolute; z-index:1; left:50%; top:50%; width:0; height:0;
+    border-left:14px solid transparent; border-right:14px solid transparent;
+    border-bottom:34px solid rgba(47,127,219,.35);
+    transform-origin:50% 100%;
+    transform:translate(-50%,-100%) rotate(0deg);
+    transition:transform .15s linear;
+    opacity:0;
+  }
+  .user-cone.show { opacity:1; }
+  .title-pill {
+    background:var(--panel); border-radius:12px; padding:8px 16px;
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    font-family:'Playfair Display',serif; font-weight:600; font-size:17px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    display:flex; flex-direction:column; line-height:1.15;
+  }
+  .title-pill small { font-family:'Inter'; font-weight:400; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .spacer { flex:1; }
+
+  /* ---------- Layers panel ---------- */
+  .layers-panel {
+    position:absolute; top:72px; right:16px; z-index:6;
+    background:var(--panel); border-radius:14px;
+    box-shadow:0 4px 24px rgba(0,0,0,.28);
+    padding:5px; min-width:165px; display:none;
+  }
+  .layers-panel.open { display:block; }
+  .layer-row {
+    width:100%; display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border:none; background:transparent;
+    color:var(--ink); font-family:'Inter',sans-serif;
+    font-size:13.5px; font-weight:500;
+    border-radius:10px; cursor:pointer; transition:background .12s;
+    text-align:left;
+  }
+  .layer-row:hover { background:var(--panel-2); }
+  .layer-ico { font-size:16px; color:var(--ink-soft); width:18px; flex-shrink:0; }
+  .layer-label { flex:1; }
+  .lr-pip {
+    width:30px; height:17px; border-radius:8.5px;
+    background:var(--line); flex-shrink:0; position:relative;
+    transition:background .2s;
+  }
+  .lr-pip::after {
+    content:''; position:absolute; top:2.5px; left:2.5px;
+    width:12px; height:12px; border-radius:50%;
+    background:white; transition:transform .2s;
+  }
+  .layer-row.on .lr-pip { background:var(--accent); }
+  .layer-row.on .lr-pip::after { transform:translateX(13px); }
+  .lr-sep { height:1px; background:var(--line); margin:2px 8px; }
+
+  /* ---------- Side panel ---------- */
+  .panel {
+    position:absolute; top:0; left:0; bottom:0; z-index:10;
+    width:340px; max-width:86vw;
+    background:var(--panel);
+    box-shadow:6px 0 30px rgba(0,0,0,.25);
+    transform:translateX(-104%);
+    transition:transform .34s cubic-bezier(.4,.0,.2,1);
+    display:flex; flex-direction:column;
+  }
+  .panel.open { transform:translateX(0); }
+  .panel-head {
+    padding:22px 20px 14px; border-bottom:1px solid var(--line);
+    display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+  }
+  .panel-head h1 { font-family:'Playfair Display',serif; font-weight:700; font-size:25px; line-height:1.1; }
+  .close-x { background:none; border:none; color:var(--ink-soft); font-size:24px; cursor:pointer; line-height:1; padding:2px; }
+
+  .search-wrap {
+    margin:14px 16px 12px; padding:9px 12px; display:flex; align-items:center; gap:8px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:11px;
+  }
+  .search-wrap i { color:var(--ink-soft); font-size:15px; flex-shrink:0; }
+  .search-wrap input {
+    border:none; background:none; outline:none; flex:1; min-width:0;
+    font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink);
+  }
+  .search-wrap input::placeholder { color:var(--ink-soft); }
+  .filters { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:7px; }
+  .chip {
+    border:1px solid var(--line); background:transparent; color:var(--ink-soft);
+    border-radius:20px; padding:5px 11px; font-size:12px; font-weight:500; cursor:pointer;
+    display:inline-flex; align-items:center; gap:5px; transition:all .15s;
+  }
+  .chip .dot { width:9px; height:9px; border-radius:50%; }
+  .chip.on { color:#fff; border-color:transparent; }
+
+  .list { flex:1; overflow-y:auto; padding:6px 0 26px; }
+  .group-h {
+    font-family:'Playfair Display',serif; font-style:italic; font-weight:600; font-size:15px;
+    padding:14px 20px 6px; color:var(--ink-soft);
+    display:flex; align-items:center; gap:8px;
+  }
+  .group-h .gi { width:18px; height:18px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#fff; }
+  .item {
+    padding:9px 20px; cursor:pointer; display:flex; gap:11px; align-items:flex-start;
+    border-left:3px solid transparent; transition:background .12s;
+  }
+  .item:hover, .item:active { background:var(--panel-2); }
+  .item .pin { width:11px; height:11px; border-radius:50%; margin-top:4px; flex-shrink:0; box-shadow:0 0 0 3px rgba(0,0,0,.04); }
+  .item .meta { flex:1; min-width:0; }
+  .item .nm { font-size:14px; font-weight:500; display:flex; align-items:center; gap:6px; }
+  .item .ad { font-size:11.5px; color:var(--ink-soft); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .star { color:#d8a93c; font-size:12px; }
+
+  /* ---------- POI modal (fixed to viewport center, never tracks map movement) ---------- */
+  .poi-backdrop {
+    position:fixed; inset:0; background:rgba(20,15,8,.4); z-index:20;
+    opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  .poi-backdrop.open { opacity:1; pointer-events:auto; }
+  .poi-modal {
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.96);
+    width:320px; max-width:88vw; max-height:78vh;
+    background:var(--panel); color:var(--ink);
+    border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,.4);
+    font-family:'Inter',sans-serif;
+    z-index:21; opacity:0; pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .poi-modal.open { opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1); }
+  .poi-modal-close {
+    position:absolute; top:8px; right:8px; z-index:2;
+    width:30px; height:30px; border-radius:50%; border:none;
+    background:var(--panel); color:var(--ink-soft); font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.22);
+  }
+  .poi-modal-scroll { position:relative; overflow-y:auto; max-height:78vh; border-radius:18px; }
+  .pop-band { position:absolute; left:0; top:0; bottom:0; width:5px; }
+  .pop-body { padding:14px 16px 16px 21px; }
+  .pop-cat { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
+  .pop-cat .ci { width:16px; height:16px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#fff; }
+  .pop-name { font-family:'Playfair Display',serif; font-weight:600; font-size:19px; line-height:1.15; margin:7px 0 3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; cursor:pointer; position:relative; }
+  .copied-flash {
+    position:absolute; left:0; top:-24px; background:var(--ink); color:var(--panel);
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;
+    opacity:0; pointer-events:none; transition:opacity .15s ease; white-space:nowrap;
+  }
+  .copied-flash.show { opacity:1; }
+  .pop-addr { font-size:12px; color:var(--ink-soft); margin-bottom:9px; }
+  .pop-price { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
+    border-radius:8px; padding:4px 9px; margin-bottom:10px; }
+  .pop-note { font-size:13px; line-height:1.5; margin-bottom:13px; }
+  .pop-btns { display:flex; flex-wrap:wrap; gap:8px; }
+  .pop-btns a {
+    flex:1; text-align:center; text-decoration:none; font-size:12.5px; font-weight:600;
+    padding:9px 6px; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:5px;
+    border:1px solid var(--line); color:var(--ink); transition:background .15s;
+  }
+  .pop-btns a.primary { background:var(--accent); color:#fff; border-color:transparent; }
+  .pop-btns a.full { flex:1 1 100%; }
+  .pop-btns a:active { transform:scale(.97); }
+
+  /* ---------- Markers ---------- */
+  .mk { width:26px; height:26px; border-radius:50%;
+        border:2px solid rgba(255,255,255,.85); box-shadow:0 3px 8px rgba(0,0,0,.3);
+        display:flex; align-items:center; justify-content:center; cursor:pointer;
+        position:relative; will-change:transform; }
+  .mk::after { content:''; position:absolute; top:calc(100% - 2px); left:50%;
+               transform:translateX(-50%); width:10px; height:10px;
+               background:inherit; clip-path:polygon(0 0,100% 0,50% 100%); }
+  .mk i { color:#fff; font-size:13px; }
+  .mk.home { width:40px; height:40px; border-width:3px; z-index:3; }
+  .mk.home i { font-size:19px; }
+  .mk.home::after { width:14px; height:12px; }
+  .mk.starred { box-shadow:0 0 0 3px #d8a93c, 0 3px 9px rgba(0,0,0,.35); }
+
+.legend-note { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); z-index:4;
+    background:var(--panel); color:var(--ink-soft); font-size:11px; padding:7px 14px; border-radius:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,.2); white-space:nowrap; opacity:.95; }
+
+  @media (max-width:520px){
+    .title-pill { font-size:15px; }
+    .legend-note { display:none; }
+  }
+  /* NavigationControl zoom buttons */
+  .mapboxgl-ctrl-group { background:var(--panel) !important; border:none !important; border-radius:12px !important; box-shadow:0 2px 10px rgba(0,0,0,.18) !important; overflow:hidden; }
+  .mapboxgl-ctrl-group button { width:44px !important; height:44px !important; }
+  .mapboxgl-ctrl-group button+button { border-top:1px solid var(--line) !important; }
+  body.night .mapboxgl-ctrl-icon { filter:invert(1) brightness(.85) !important; }
+
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="topbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Open places list"><i class="icon-menu"></i></button>
+  <div class="title-pill">DFW Night Out<small>Fri · July 17 2026</small></div>
+  <div class="spacer"></div>
+  <button class="toggle-btn" id="layersBtn" aria-label="Toggle map layers"><i class="icon-layers"></i></button>
+  <button class="toggle-btn" id="resetBtn" aria-label="Recenter map"><i class="icon-rotate-ccw"></i></button>
+  <button class="locate-btn" id="locateBtn" aria-label="Toggle live location tracking"><i class="icon-locate-fixed"></i></button>
+</div>
+
+<div class="layers-panel" id="layersPanel">
+  <button class="layer-row" id="zoneToggle">
+    <i class="icon-map layer-ico"></i>
+    <span class="layer-label">Zones</span>
+    <span class="lr-pip"></span>
+  </button>
+</div>
+
+<aside class="panel" id="panel">
+  <div class="panel-head">
+    <div>
+      <h1>Dallas &amp; Fort Worth</h1>
+    </div>
+    <button class="close-x" id="closeBtn" aria-label="Close">&times;</button>
+  </div>
+  <div class="search-wrap">
+    <i class="icon-search"></i>
+    <input type="text" id="searchInput" placeholder="Search places…" autocomplete="off">
+  </div>
+  <div class="list" id="list"></div>
+</aside>
+
+<div class="poi-backdrop" id="poiBackdrop"></div>
+<div class="poi-modal" id="poiModal">
+  <button class="poi-modal-close" id="poiModalClose" aria-label="Close">&times;</button>
+  <div class="poi-modal-scroll" id="poiModalContent"></div>
+</div>
+
+<div class="legend-note" id="legendNote">Tap a pin for details, hours &amp; directions</div>
+
+<script>
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibmF0aGFubWlyYW5kYSIsImEiOiJjbXFyZ2RteGcwcXh5Mnlvam44ZTFtNWY4In0.T15pzkuzL4bAEAnIRI9TCQ';
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
+
+let DATA = null, map = null, markers = [], userMarker = null;
+let zonesMode = false;
+let layersPanelOpen = false;
+let searchQuery = '';
+
+function matchesSearch(loc){
+  if(!searchQuery) return true;
+  const hay=(loc.name+' '+(loc.tags||[]).join(' ')+' '+(loc.note||'')).toLowerCase();
+  return hay.includes(searchQuery);
+}
+
+function applyVisibility(){
+  markers.forEach(m=>{ m.el.style.display=matchesSearch(m.loc)?'':'none'; });
+}
+
+const ICONS = {
+  home:'icon-home', hotel:'icon-hotel', landmark:'icon-landmark',
+  utensils:'icon-utensils', music:'icon-music', trophy:'icon-trophy',
+  train:'icon-train-front', ticket:'icon-ticket', martini:'icon-martini'
+};
+
+document.addEventListener('click',e=>{
+  const nameEl=e.target.closest('.pop-name');
+  if(!nameEl) return;
+  navigator.clipboard.writeText(nameEl.dataset.copy).then(()=>{
+    const flash=nameEl.querySelector('.copied-flash');
+    flash.classList.add('show');
+    clearTimeout(flash._t);
+    flash._t=setTimeout(()=>flash.classList.remove('show'),1200);
+  }).catch(()=>{});
+});
+
+async function boot(){
+  DATA = await (await fetch('locations.json')).json();
+  initMap();
+  buildList();
+  document.getElementById('searchInput').addEventListener('input',onSearchInput);
+  document.getElementById('poiModalClose').addEventListener('click',closePoiModal);
+  document.getElementById('poiBackdrop').addEventListener('click',closePoiModal);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePoiModal(); });
+}
+
+function initMap(){
+  map = new mapboxgl.Map({
+    container:'map',
+    style: styleFor(),
+    center:[DATA.config.homebase.lng, DATA.config.homebase.lat],
+    zoom:12.2,
+    minZoom:9.3,
+    maxBounds:[[-97.55, 32.55], [-96.50, 33.05]],
+    attributionControl:false
+  });
+  map.addControl(new mapboxgl.AttributionControl({compact:true}));
+  map.addControl(new mapboxgl.NavigationControl({showCompass:false}), 'bottom-right');
+  map.on('load', ()=>{ paintTheme(); addMarkers(); fitToRadius(); });
+}
+
+function styleFor(){
+  return 'mapbox://styles/mapbox/dark-v11';
+}
+
+function paintTheme(){
+  const layers = map.getStyle().layers;
+  const set = (id,prop,val)=>{ if(map.getLayer(id)){ try{ map.setPaintProperty(id,prop,val);}catch(e){} } };
+  map.setPaintProperty('background','background-color','#0d1b2a');
+  layers.forEach(l=>{
+    if(l.type==='fill' && /land|landuse|landcover/.test(l.id)) set(l.id,'fill-color','#13243a');
+    if(/water/.test(l.id) && l.type==='fill') set(l.id,'fill-color','#0f2c44');
+    if(/road/.test(l.id) && l.type==='line') set(l.id,'line-color','#c5763a');
+    if(/park|green/.test(l.id) && l.type==='fill') set(l.id,'fill-color','#163a2a');
+  });
+}
+
+function fitToRadius(){
+  const {lat,lng}=DATA.config.homebase, r=DATA.config.radiusMiles;
+  const dLat=r/69, dLng=r/(69*Math.cos(lat*Math.PI/180));
+  map.fitBounds([[lng-dLng,lat-dLat],[lng+dLng,lat+dLat]],{padding:40,duration:0});
+}
+
+function addMarkers(){
+  markers.forEach(m=>m.marker.remove()); markers=[];
+  DATA.locations.filter(l=>l.cat!=='zones').forEach(loc=>{
+    const cat=DATA.categories[loc.cat];
+    if(!cat) return;
+    const outer=document.createElement('div');
+    const inner=document.createElement('div');
+    inner.className='mk'+(loc.cat==='homebase'?' home':'')+(loc.star?' starred':'');
+    inner.style.background=cat.color;
+    inner.innerHTML=`<i class="${ICONS[cat.icon]}"></i>`;
+    outer.appendChild(inner);
+    const marker=new mapboxgl.Marker({element:outer,anchor:'bottom',offset:[0,loc.cat==='homebase'?-12:-10]})
+      .setLngLat([loc.lng,loc.lat])
+      .addTo(map);
+    inner.addEventListener('click',()=>{
+      map.easeTo({center:[loc.lng,loc.lat],zoom:14,duration:500});
+      openPoiModal(poiCardHtml(loc,cat));
+    });
+    markers.push({marker,cat:loc.cat,el:outer,loc});
+  });
+}
+
+function poiCardHtml(loc,cat){
+  const city=loc.city||'dallas';
+  const q=encodeURIComponent(loc.name+' '+(loc.address||''));
+  const apple=`https://maps.apple.com/?q=${q}&ll=${loc.lat},${loc.lng}`;
+  const google=`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
+  const webSearch=`https://www.google.com/search?q=${encodeURIComponent(loc.name+' '+city+' texas')}`;
+  const tiktok=`https://www.tiktok.com/search?q=${encodeURIComponent(loc.name+' '+city)}`;
+  const starHtml=loc.star?'<span class="star"><i class="icon-star" style="font-size:13px"></i></span>':'';
+  const priceHtml=loc.price?`<div class="pop-price"><i class="icon-ticket" style="font-size:12px"></i>${loc.price}</div>`:'';
+  const linkBtn=loc.link?`<a class="full primary" href="${loc.link}" target="_blank" rel="noopener"><i class="icon-external-link" style="font-size:13px"></i>${loc.linkLabel||'Event Page / Tickets'}</a>`:'';
+  return `
+    <div class="pop-band" style="background:${cat.color}"></div>
+    <div class="pop-body">
+      <div class="pop-cat"><span class="ci" style="background:${cat.color}"><i class="${ICONS[cat.icon]}"></i></span>${cat.label}</div>
+      <div class="pop-name" data-copy="${loc.name} ${city}">${loc.name}${starHtml}<i class="icon-copy" style="font-size:12px;opacity:.5;"></i><span class="copied-flash">Copied!</span></div>
+      ${loc.address?`<div class="pop-addr">${loc.address}</div>`:''}
+      ${priceHtml}
+      <div class="pop-note">${loc.note||''}</div>
+      <div class="pop-btns">
+        ${linkBtn}
+        <a href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
+        <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
+        <a class="full" href="${webSearch}" target="_blank" rel="noopener"><i class="icon-search" style="font-size:13px"></i>Search the Web</a>
+        <a class="full" href="${tiktok}" target="_blank" rel="noopener"><i class="icon-video" style="font-size:13px"></i>TikTok<span style="opacity:.6;font-weight:400;margin-left:3px;">(Browser only)</span></a>
+      </div>
+    </div>`;
+}
+
+function openPoiModal(html){
+  document.getElementById('poiModalContent').innerHTML=html;
+  document.getElementById('poiModal').classList.add('open');
+  document.getElementById('poiBackdrop').classList.add('open');
+}
+
+function closePoiModal(){
+  document.getElementById('poiModal').classList.remove('open');
+  document.getElementById('poiBackdrop').classList.remove('open');
+}
+
+function onSearchInput(e){
+  searchQuery=e.target.value.trim().toLowerCase();
+  applyVisibility();
+  buildList();
+}
+
+function buildList(){
+  const list=document.getElementById('list'); list.innerHTML='';
+  DATA.locations.filter(l=>l.cat!=='zones' && matchesSearch(l)).forEach(loc=>{
+    const c=DATA.categories[loc.cat];
+    if(!c) return;
+    const it=document.createElement('div'); it.className='item'; it.style.borderLeftColor=c.color;
+    it.innerHTML=`<span class="pin" style="background:${c.color}"></span>
+      <div class="meta">
+        <div class="nm">${loc.name}${loc.star?'<span class="star"><i class="icon-star"></i></span>':''}</div>
+        <div class="ad">${loc.address||''}${loc.price?' · '+loc.price:''}</div>
+      </div>`;
+    it.addEventListener('click',()=>{
+      closePanel();
+      map.easeTo({center:[loc.lng,loc.lat],zoom:14,duration:500});
+      openPoiModal(poiCardHtml(loc,c));
+    });
+    list.appendChild(it);
+  });
+}
+
+/* ---------- Live location ---------- */
+let watchId=null, tracking=false, firstFix=true;
+
+function inTripBounds(lng,lat){
+  return lng>=-97.55 && lng<=-96.50 && lat>=32.55 && lat<=33.05;
+}
+
+function updateUserMarker(lng,lat){
+  if(!userMarker){
+    const el=document.createElement('div');
+    el.className='user-dot';
+    el.innerHTML='<div class="user-cone" id="userCone"></div><div class="user-pip"></div>';
+    userMarker=new mapboxgl.Marker({element:el}).setLngLat([lng,lat]).addTo(map);
+    map.flyTo({center:[lng,lat],zoom:14,speed:.9});
+  } else {
+    userMarker.setLngLat([lng,lat]);
+  }
+}
+
+function setUserHeading(deg){
+  const cone=document.getElementById('userCone');
+  if(!cone) return;
+  cone.style.transform=`translate(-50%,-100%) rotate(${deg}deg)`;
+  cone.classList.add('show');
+}
+
+function onOrientation(e){
+  const heading = e.webkitCompassHeading!=null ? e.webkitCompassHeading
+    : (e.alpha!=null ? (360-e.alpha)%360 : null);
+  if(heading!=null) setUserHeading(heading);
+}
+
+function startTracking(){
+  if(!navigator.geolocation){ alert('Location not supported on this browser.'); return; }
+  tracking=true; firstFix=true;
+  document.getElementById('locateBtn').classList.add('on');
+  watchId=navigator.geolocation.watchPosition(pos=>{
+    const {latitude,longitude,heading}=pos.coords;
+    if(!inTripBounds(longitude,latitude)){
+      if(firstFix){ alert("You're outside the trip area — location not shown on map."); stopTracking(); }
+      return;
+    }
+    firstFix=false;
+    updateUserMarker(longitude,latitude);
+    if(heading!=null && !isNaN(heading)) setUserHeading(heading);
+  },()=>{
+    alert('Could not get your location. Check browser permissions.');
+    stopTracking();
+  },{enableHighAccuracy:true});
+
+  if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(state=>{
+      if(state==='granted') window.addEventListener('deviceorientation',onOrientation);
+    }).catch(()=>{});
+  } else if(window.DeviceOrientationEvent){
+    window.addEventListener('deviceorientation',onOrientation);
+  }
+}
+
+function stopTracking(){
+  tracking=false;
+  document.getElementById('locateBtn').classList.remove('on');
+  if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
+  window.removeEventListener('deviceorientation',onOrientation);
+  if(userMarker){ userMarker.remove(); userMarker=null; }
+}
+
+function locate(){
+  if(!tracking){ startTracking(); return; }
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude,longitude,heading}=pos.coords;
+    if(!inTripBounds(longitude,latitude)) return;
+    updateUserMarker(longitude,latitude);
+    map.easeTo({center:[longitude,latitude],zoom:14,duration:500});
+    if(heading!=null && !isNaN(heading)) setUserHeading(heading);
+  },()=>{},{enableHighAccuracy:true});
+}
+
+/* ---------- Zones layer (additive — PoI pins stay visible) ---------- */
+function makeCirclePolygon(lng,lat,radiusKm){
+  const steps=64, coords=[];
+  for(let i=0;i<=steps;i++){
+    const a=(i/steps)*2*Math.PI;
+    coords.push([
+      lng+(radiusKm/111.32/Math.cos(lat*Math.PI/180))*Math.sin(a),
+      lat+(radiusKm/110.574)*Math.cos(a)
+    ]);
+  }
+  return {type:'Polygon',coordinates:[coords]};
+}
+
+function addZoneLayers(){
+  if(map.getSource('zones-src')) return;
+  const zones=DATA.locations.filter(l=>l.cat==='zones');
+  const geojson={type:'FeatureCollection',features:zones.map(z=>({
+    type:'Feature',
+    properties:{name:z.name,note:z.note||'',address:z.address||'',lat:z.lat,lng:z.lng},
+    geometry:makeCirclePolygon(z.lng,z.lat,z.radius||0.5)
+  }))};
+  map.addSource('zones-src',{type:'geojson',data:geojson});
+  map.addLayer({id:'zones-fill',type:'fill',source:'zones-src',
+    paint:{'fill-color':'#7B9E9E','fill-opacity':0.15}});
+  map.addLayer({id:'zones-line',type:'line',source:'zones-src',
+    paint:{'line-color':'#7B9E9E','line-width':2,'line-opacity':0.6}});
+  map.on('click','zones-fill',onZoneClick);
+  map.on('mouseenter','zones-fill',()=>{map.getCanvas().style.cursor='pointer';});
+  map.on('mouseleave','zones-fill',()=>{map.getCanvas().style.cursor='';});
+}
+
+function removeZoneLayers(){
+  if(map.getLayer('zones-fill')) map.removeLayer('zones-fill');
+  if(map.getLayer('zones-line')) map.removeLayer('zones-line');
+  if(map.getSource('zones-src')) map.removeSource('zones-src');
+}
+
+function onZoneClick(e){
+  const {name,note,address,lat,lng}=e.features[0].properties;
+  const q=encodeURIComponent(name+' '+(address||''));
+  const apple=`https://maps.apple.com/?q=${q}&ll=${lat},${lng}`;
+  const google=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  openPoiModal(`
+      <div class="pop-band" style="background:#7B9E9E"></div>
+      <div class="pop-body">
+        <div class="pop-cat"><span class="ci" style="background:#7B9E9E"><i class="icon-map"></i></span>Zone</div>
+        <div class="pop-name">${name}</div>
+        ${address?`<div class="pop-addr">${address}</div>`:''}
+        <div class="pop-note">${note}</div>
+        <div class="pop-btns">
+          <a class="primary" href="${apple}" target="_blank" rel="noopener"><i class="icon-apple" style="font-size:13px"></i>Apple Maps</a>
+          <a href="${google}" target="_blank" rel="noopener"><i class="icon-navigation" style="font-size:13px"></i>Google Maps</a>
+        </div>
+      </div>`);
+}
+
+function toggleZonesMode(){
+  zonesMode=!zonesMode;
+  document.getElementById('zoneToggle').classList.toggle('on',zonesMode);
+  if(zonesMode){
+    addZoneLayers();
+  } else {
+    closePoiModal();
+    removeZoneLayers();
+  }
+}
+
+
+/* ---------- Layers panel ---------- */
+function toggleLayersPanel(){
+  layersPanelOpen=!layersPanelOpen;
+  document.getElementById('layersPanel').classList.toggle('open',layersPanelOpen);
+  document.getElementById('layersBtn').classList.toggle('on',layersPanelOpen);
+}
+
+/* ---------- Theme: night only ---------- */
+document.body.classList.add('night');
+
+/* ---------- Panel ---------- */
+function openPanel(){ document.getElementById('panel').classList.add('open'); }
+function closePanel(){ document.getElementById('panel').classList.remove('open'); }
+
+/* ---------- Event listeners ---------- */
+document.getElementById('menuBtn').addEventListener('click',openPanel);
+document.getElementById('closeBtn').addEventListener('click',closePanel);
+document.getElementById('layersBtn').addEventListener('click',toggleLayersPanel);
+document.getElementById('zoneToggle').addEventListener('click',toggleZonesMode);
+document.getElementById('resetBtn').addEventListener('click',()=>fitToRadius());
+document.getElementById('locateBtn').addEventListener('click',locate);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePanel(); });
+document.addEventListener('click',e=>{
+  if(layersPanelOpen && !e.target.closest('#layersPanel') && !e.target.closest('#layersBtn')){
+    layersPanelOpen=false;
+    document.getElementById('layersPanel').classList.remove('open');
+    document.getElementById('layersBtn').classList.remove('on');
+  }
+});
+
+boot();
+</script>
+</body>
+</html>
