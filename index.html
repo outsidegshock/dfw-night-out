@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>DFW Night Out — July 2026</title>
+<title>DFW Nights Out</title>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet" />
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -216,9 +216,6 @@
   }
   .copied-flash.show { opacity:1; }
   .pop-addr { font-size:12px; color:var(--ink-soft); margin-bottom:9px; }
-  .pop-price { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600;
-    background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
-    border-radius:8px; padding:4px 9px; margin-bottom:10px; }
   .pop-note { font-size:13px; line-height:1.5; margin-bottom:13px; }
   .pop-btns { display:flex; flex-wrap:wrap; gap:8px; }
   .pop-btns a {
@@ -266,7 +263,7 @@
 
 <div class="topbar">
   <button class="menu-btn" id="menuBtn" aria-label="Open places list"><i class="icon-menu"></i></button>
-  <div class="title-pill">DFW Night Out<small>Fri · July 17 2026</small></div>
+  <div class="title-pill">DFW Nights Out<small>Dallas &amp; Fort Worth</small></div>
   <div class="spacer"></div>
   <button class="toggle-btn" id="layersBtn" aria-label="Toggle map layers"><i class="icon-layers"></i></button>
   <button class="toggle-btn" id="resetBtn" aria-label="Recenter map"><i class="icon-rotate-ccw"></i></button>
@@ -326,7 +323,7 @@ function applyVisibility(){
 const ICONS = {
   home:'icon-home', hotel:'icon-hotel', landmark:'icon-landmark',
   utensils:'icon-utensils', music:'icon-music', trophy:'icon-trophy',
-  train:'icon-train-front', ticket:'icon-ticket', martini:'icon-martini'
+  train:'icon-train-front', martini:'icon-martini'
 };
 
 document.addEventListener('click',e=>{
@@ -357,7 +354,7 @@ function initMap(){
     center:[DATA.config.homebase.lng, DATA.config.homebase.lat],
     zoom:12.2,
     minZoom:9.3,
-    maxBounds:[[-97.55, 32.55], [-96.50, 33.05]],
+    maxBounds:[[-97.75, 32.40], [-96.35, 33.30]],
     attributionControl:false
   });
   map.addControl(new mapboxgl.AttributionControl({compact:true}));
@@ -417,15 +414,13 @@ function poiCardHtml(loc,cat){
   const webSearch=`https://www.google.com/search?q=${encodeURIComponent(loc.name+' '+city+' texas')}`;
   const tiktok=`https://www.tiktok.com/search?q=${encodeURIComponent(loc.name+' '+city)}`;
   const starHtml=loc.star?'<span class="star"><i class="icon-star" style="font-size:13px"></i></span>':'';
-  const priceHtml=loc.price?`<div class="pop-price"><i class="icon-ticket" style="font-size:12px"></i>${loc.price}</div>`:'';
-  const linkBtn=loc.link?`<a class="full primary" href="${loc.link}" target="_blank" rel="noopener"><i class="icon-external-link" style="font-size:13px"></i>${loc.linkLabel||'Event Page / Tickets'}</a>`:'';
+  const linkBtn=loc.link?`<a class="full primary" href="${loc.link}" target="_blank" rel="noopener"><i class="icon-external-link" style="font-size:13px"></i>${loc.linkLabel||'Instagram'}</a>`:'';
   return `
     <div class="pop-band" style="background:${cat.color}"></div>
     <div class="pop-body">
       <div class="pop-cat"><span class="ci" style="background:${cat.color}"><i class="${ICONS[cat.icon]}"></i></span>${cat.label}</div>
       <div class="pop-name" data-copy="${loc.name} ${city}">${loc.name}${starHtml}<i class="icon-copy" style="font-size:12px;opacity:.5;"></i><span class="copied-flash">Copied!</span></div>
       ${loc.address?`<div class="pop-addr">${loc.address}</div>`:''}
-      ${priceHtml}
       <div class="pop-note">${loc.note||''}</div>
       <div class="pop-btns">
         ${linkBtn}
@@ -463,7 +458,7 @@ function buildList(){
     it.innerHTML=`<span class="pin" style="background:${c.color}"></span>
       <div class="meta">
         <div class="nm">${loc.name}${loc.star?'<span class="star"><i class="icon-star"></i></span>':''}</div>
-        <div class="ad">${loc.address||''}${loc.price?' · '+loc.price:''}</div>
+        <div class="ad">${loc.address||''}</div>
       </div>`;
     it.addEventListener('click',()=>{
       closePanel();
@@ -478,7 +473,7 @@ function buildList(){
 let watchId=null, tracking=false, firstFix=true;
 
 function inTripBounds(lng,lat){
-  return lng>=-97.55 && lng<=-96.50 && lat>=32.55 && lat<=33.05;
+  return lng>=-97.75 && lng<=-96.35 && lat>=32.40 && lat<=33.30;
 }
 
 function updateUserMarker(lng,lat){
